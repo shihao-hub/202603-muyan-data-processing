@@ -12,3 +12,6 @@ wheels/
 # Excel temp files
 ~$.xlsx
 ~$*.xlsx
+
+# Git worktrees (isolated development environments)
+.worktrees/

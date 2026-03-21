@@ -13,3 +13,19 @@ echo 2. 检查模板内容:
 type "templates\python312._pth"
 echo.
 pause
+
+echo.
+echo 3. 测试基础launcher.bat:
+cd ..
+if exist "launcher.bat" (
+  echo   ✓ launcher.bat存在
+  echo   运行测试...
+  call launcher.bat --help 2>&1 | findstr /i "错误" >nul
+  if errorlevel 1 (
+    echo   ✓ launcher.bat运行正常
+  ) else (
+    echo   ✗ launcher.bat运行出错
+  )
+) else (
+  echo   ✗ launcher.bat不存在
+)

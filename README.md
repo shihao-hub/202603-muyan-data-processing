@@ -20,3 +20,10 @@
 - `tests/` - 测试脚本
 - `templates/` - 配置文件模板
 - `docs/` - 用户文档
+- `scripts/` - 打包脚本
+
+#### 打包工具
+- `scripts/build_package.bat` - 创建完整启动器包
+- `scripts/create_first_run_package.bat` - 创建首次运行包（不含Python和依赖）
+
+打包输出目录: `build/releases/`

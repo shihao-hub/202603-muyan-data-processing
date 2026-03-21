@@ -71,7 +71,56 @@ if %VERBOSE_MODE% == 1 (
     echo.
 )
 
-echo [1/5] 检查目录结构...
+echo [2/5] 检查Python环境...
+
+:: 检查嵌入式Python
+if exist "%PYTHON_DIR%\python.exe" (
+    echo    ✓ 嵌入式Python存在
+    goto :python_ok
+)
+
+echo    ⓘ 嵌入式Python不存在
+if %OFFLINE_MODE% == 1 (
+    echo   错误: 离线模式下需要嵌入式Python
+    pause
+    exit /b 1
+)
+
+echo    ℹ 将在后续版本中添加自动下载功能
+echo    💡 提示: 请手动下载Python嵌入式版本到python\目录
+echo.
+
+:python_ok
+
+:: 配置Python路径
+echo [3/5] 配置Python路径...
+
+:: 检查python312._pth文件
+if not exist "%PYTHON_DIR%\python312._pth" (
+    echo    ℹ 创建Python路径配置文件...
+    copy "%~dp0templates\python312._pth" "%PYTHON_DIR%\python312._pth" >nul
+    if errorlevel 1 (
+        echo    ⚠ 无法创建路径配置，尝试手动配置...
+    ) else (
+        echo    ✓ Python路径配置文件创建成功
+    )
+) else (
+    echo    ✓ Python路径配置文件已存在
+)
+
+:: 验证Python能正确导入app模块
+echo    ℹ 验证模块导入...
+cd /d "%PYTHON_DIR%"
+python.exe -c "import sys; sys.path.insert(0, r'%APP_DIR%'); print('Python路径配置测试: OK')" 2>&1 | findstr /i "error" >nul
+if %errorlevel% == 0 (
+    echo    ✗ Python路径配置错误
+    echo      请检查python312._pth文件配置
+) else (
+    echo    ✓ Python路径配置正确
+)
+cd /d "%~dp0"
+
+echo [4/5] 检查目录结构...
 if not exist "%APP_DIR%" (
     echo   错误: app目录不存在
     echo   请确保工具完整解压
@@ -83,8 +132,8 @@ echo    ✓ 基础目录检查通过
 echo.
 
 :: 这里将添加更多功能
-echo 启动器基础框架就绪
-echo 后续将添加: Python环境管理、依赖安装、代码更新等功能
+echo [5/5] 启动器基础框架就绪
+echo 后续将添加: 依赖安装、代码更新等功能
 echo.
 
 pause

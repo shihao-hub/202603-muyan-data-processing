@@ -141,28 +141,56 @@ if %errorlevel% == 0 (
 )
 cd /d "%~dp0"
 
-echo [4/5] 检查目录结构...
+echo [4/5] 启动材料匹配工具...
+echo.
+
+:: 切换到Python目录执行
+cd /d "%PYTHON_DIR%"
+
 if %VERBOSE_MODE% == 1 (
-    echo %LOG_PREFIX% [INFO] 检查目录结构 >> "%LOG_FILE%"
-    echo %LOG_PREFIX% [INFO] APP_DIR=%APP_DIR% >> "%LOG_FILE%"
-    echo %LOG_PREFIX% [INFO] PYTHON_DIR=%PYTHON_DIR% >> "%LOG_FILE%"
+    echo %LOG_PREFIX% [INFO] 切换到Python目录: %PYTHON_DIR% >> "%LOG_FILE%"
+    echo %LOG_PREFIX% [INFO] 启动应用命令: python.exe -m material_matcher.cli %* >> "%LOG_FILE%"
 )
-if not exist "%APP_DIR%" (
-    echo   错误: app目录不存在
-    echo   请确保工具完整解压
+
+:: 检查应用是否存在
+python.exe -c "import sys; sys.path.insert(0, r'%APP_DIR%'); try: import material_matcher; print('应用检查: OK'); except ImportError as e: print('应用检查: FAIL -', e); exit(1)" 2>&1 | findstr /i "OK" >nul
+if errorlevel 1 (
+    echo    ✗ 应用模块导入失败
+    echo      请确保app目录包含material_matcher模块
     pause
     exit /b 1
 )
 
-echo    ✓ 基础目录检查通过
+echo    ✓ 应用模块检查通过
+echo    🚀 启动材料匹配工具...
+echo    ========================================
 echo.
 
-:: 这里将添加更多功能
-echo [5/5] 启动器基础框架就绪
-echo 后续将添加: 依赖安装、代码更新等功能
-echo.
+:: 执行实际应用
+python.exe -m material_matcher.cli %*
 
-pause
+:: 记录执行结果
+set "APP_EXIT_CODE=%errorlevel%"
+if %VERBOSE_MODE% == 1 (
+    echo %LOG_PREFIX% [INFO] 应用执行完成，退出代码: !APP_EXIT_CODE! >> "%LOG_FILE%"
+)
+
+cd /d "%~dp0"
+
+echo.
+echo ========================================
+if %APP_EXIT_CODE% == 0 (
+    echo    ✅ 材料匹配工具执行完成
+) else (
+    echo    ⚠ 材料匹配工具退出代码: %APP_EXIT_CODE%
+)
+
+echo [5/5] 清理和完成...
+if %VERBOSE_MODE% == 1 (
+    echo %LOG_PREFIX% [INFO] 启动器执行完成 >> "%LOG_FILE%"
+    echo   日志文件: %LOG_FILE%
+)
+echo.
 
 :: 错误处理
 if errorlevel 1 (

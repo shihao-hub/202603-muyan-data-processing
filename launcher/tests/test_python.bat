@@ -1,4 +1,5 @@
 @echo off
+set TEST_PASSED=1
 echo 测试Python环境检查...
 echo.
 
@@ -20,6 +21,7 @@ if exist "..\python\python.exe" (
     echo   ✓ 嵌入式Python可执行
   ) else (
     echo   ✗ 嵌入式Python损坏
+    set TEST_PASSED=0
   )
 ) else (
   echo   ⓘ 嵌入式Python目录不存在
@@ -27,4 +29,8 @@ if exist "..\python\python.exe" (
 
 echo.
 echo 测试完成
-pause
+if %TEST_PASSED% == 1 (
+  exit /b 0
+) else (
+  exit /b 1
+)

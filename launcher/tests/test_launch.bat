@@ -1,4 +1,5 @@
 @echo off
+set TEST_PASSED=1
 echo 测试应用启动功能...
 echo.
 
@@ -11,6 +12,7 @@ if exist "python\python.exe" (
     echo   ✓ Python启动正常
   ) else (
     echo   ✗ Python启动失败
+    set TEST_PASSED=0
   )
 ) else (
   echo   ⓘ Python不存在，跳过启动测试
@@ -26,6 +28,11 @@ if exist "app\material_matcher\cli.py" (
   echo   ⓘ 应用代码不存在，跳过导入测试
 )
 
+cd tests
 echo.
 echo 测试完成
-pause
+if %TEST_PASSED% == 1 (
+  exit /b 0
+) else (
+  exit /b 1
+)

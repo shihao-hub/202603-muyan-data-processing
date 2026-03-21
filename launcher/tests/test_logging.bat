@@ -1,4 +1,5 @@
 @echo off
+set TEST_PASSED=1
 echo 测试日志系统...
 echo.
 
@@ -21,9 +22,14 @@ if exist "..\logs\launcher_*.log" (
   )
 ) else (
   echo   [FAIL] 日志文件创建失败
+  set TEST_PASSED=0
 )
 :log_found
 
 echo.
 echo 测试完成
-pause
+if %TEST_PASSED% == 1 (
+  exit /b 0
+) else (
+  exit /b 1
+)

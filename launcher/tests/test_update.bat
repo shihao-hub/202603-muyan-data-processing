@@ -1,4 +1,5 @@
 @echo off
+set TEST_PASSED=1
 echo 测试更新脚本框架...
 echo.
 
@@ -11,9 +12,11 @@ if exist "update.bat" (
     echo   ✓ update.bat运行正常
   ) else (
     echo   ✗ update.bat运行出错
+    set TEST_PASSED=0
   )
 ) else (
   echo   ✗ update.bat不存在
+  set TEST_PASSED=0
 )
 
 echo.
@@ -22,8 +25,13 @@ if exist "..\cache\downloads\" (
   echo   ✓ cache/downloads目录创建成功
 ) else (
   echo   ✗ cache/downloads目录创建失败
+  set TEST_PASSED=0
 )
 
 echo.
 echo 测试完成
-pause
+if %TEST_PASSED% == 1 (
+  exit /b 0
+) else (
+  exit /b 1
+)

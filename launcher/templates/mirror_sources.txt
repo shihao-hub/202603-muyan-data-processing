@@ -1,0 +1,20 @@
+# 国内Python镜像源配置
+[main]
+# 主镜像源：清华大学
+primary = https://pypi.tuna.tsinghua.edu.cn/simple
+# 备用镜像源1：阿里云
+backup1 = https://mirrors.aliyun.com/pypi/simple/
+# 备用镜像源2：豆瓣
+backup2 = https://pypi.douban.com/simple/
+
+[gitee]
+# Gitee仓库地址（需要替换为实际仓库）
+repository = https://gitee.com/用户名/material-matcher/repository/archive/master.zip
+version_url = https://gitee.com/用户名/material-matcher/raw/master/version.txt
+
+[python]
+# Python嵌入式版本下载地址
+# 官方源
+official = https://www.python.org/ftp/python/3.12.0/python-3.12.0-embed-amd64.zip
+# 国内镜像
+mirror = https://mirrors.tuna.tsinghua.edu.cn/python/3.12.0/python-3.12.0-embed-amd64.zip

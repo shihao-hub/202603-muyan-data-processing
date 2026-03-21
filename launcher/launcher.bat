@@ -46,6 +46,24 @@ goto :parse_args
 
 :args_done
 
+:: 日志系统初始化
+set "LOG_DIR=%ROOT_DIR%logs"
+set "LOG_DATE=%date:~0,4%-%date:~5,2%-%date:~8,2%"
+set "LOG_TIME=%time:~0,2%-%time:~3,2%-%time:~6,2%"
+set "LOG_FILE=%LOG_DIR%\launcher_%LOG_DATE%_%LOG_TIME%.log"
+
+:: 创建日志目录
+if not exist "%LOG_DIR%" (
+    mkdir "%LOG_DIR%" 2>nul
+)
+
+:: 日志函数
+set "LOG_PREFIX=[%LOG_TIME%]"
+if %VERBOSE_MODE% == 1 (
+    echo %LOG_PREFIX% [INFO] 启动器开始运行 > "%LOG_FILE%"
+    echo %LOG_PREFIX% [INFO] 参数: 离线模式=%OFFLINE_MODE%, 强制模式=%FORCE_MODE%, 详细模式=%VERBOSE_MODE% >> "%LOG_FILE%"
+)
+
 :: 显示帮助信息
 if %SHOW_HELP% == 1 (
     echo 用法: launcher.bat [选项]
@@ -72,6 +90,9 @@ if %VERBOSE_MODE% == 1 (
 )
 
 echo [2/5] 检查Python环境...
+if %VERBOSE_MODE% == 1 (
+    echo %LOG_PREFIX% [INFO] 检查Python环境 >> "%LOG_FILE%"
+)
 
 :: 检查嵌入式Python
 if exist "%PYTHON_DIR%\python.exe" (
@@ -121,6 +142,11 @@ if %errorlevel% == 0 (
 cd /d "%~dp0"
 
 echo [4/5] 检查目录结构...
+if %VERBOSE_MODE% == 1 (
+    echo %LOG_PREFIX% [INFO] 检查目录结构 >> "%LOG_FILE%"
+    echo %LOG_PREFIX% [INFO] APP_DIR=%APP_DIR% >> "%LOG_FILE%"
+    echo %LOG_PREFIX% [INFO] PYTHON_DIR=%PYTHON_DIR% >> "%LOG_FILE%"
+)
 if not exist "%APP_DIR%" (
     echo   错误: app目录不存在
     echo   请确保工具完整解压
@@ -137,4 +163,15 @@ echo 后续将添加: 依赖安装、代码更新等功能
 echo.
 
 pause
+
+:: 错误处理
+if errorlevel 1 (
+    set "ERROR_CODE=!errorlevel!"
+    if %VERBOSE_MODE% == 1 (
+        echo %LOG_PREFIX% [ERROR] 启动器异常退出，错误代码: !ERROR_CODE! >> "%LOG_FILE%"
+    )
+    echo.
+    echo [FAIL] 启动器运行失败 (错误代码: !ERROR_CODE!)
+    echo   详细信息请查看日志: %LOG_FILE%
+)
 endlocal

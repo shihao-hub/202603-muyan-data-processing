@@ -15,3 +15,5 @@ wheels/
 
 # Git worktrees (isolated development environments)
 .worktrees/
+
+python/

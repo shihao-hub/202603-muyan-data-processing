@@ -40,6 +40,8 @@ if "%~1"=="--verbose" (
     shift
     goto :parse_args
 )
+:: 非启动器参数，追加到 APP_ARGS
+set "APP_ARGS=%APP_ARGS% %~1"
 shift
 goto :parse_args
 
@@ -88,7 +90,7 @@ if %VERBOSE_MODE% == 1 (
     echo.
 )
 
-echo [1/5] 检查目录结构...
+echo [1/6] 检查目录结构...
 if %VERBOSE_MODE% == 1 (
     echo %LOG_PREFIX% [INFO] 检查目录结构 >> "%LOG_FILE%"
     echo %LOG_PREFIX% [INFO] APP_DIR=%APP_DIR% >> "%LOG_FILE%"
@@ -105,7 +107,7 @@ if not exist "%APP_DIR%" (
 echo    [OK] 基础目录检查通过
 echo.
 
-echo [2/5] 检查Python环境...
+echo [2/6] 检查Python环境...
 if %VERBOSE_MODE% == 1 (
     echo %LOG_PREFIX% [INFO] 检查Python环境 >> "%LOG_FILE%"
 )
@@ -127,20 +129,40 @@ echo    [INFO] 将在后续版本中添加自动下载功能
 echo    [提示] 请手动下载Python嵌入式版本到python目录
 echo.
 
+
 :python_ok
 
 :: 配置Python路径
-echo [3/5] 配置Python路径...
+echo [3/6] 配置Python路径...
 
-:: 检查python312._pth文件
-if not exist "%PYTHON_DIR%\python312._pth" (
-    echo    [INFO] 创建Python路径配置文件...
-    copy "%~dp0templates\python312._pth" "%PYTHON_DIR%\python312._pth" >nul
-    if errorlevel 1 (
-        echo    [WARN] 无法创建路径配置，尝试手动配置...
-    ) else (
-        echo    [OK] Python路径配置文件创建成功
-    )
+:: 检测Python版本
+cd /d "%PYTHON_DIR%"
+for /f "tokens=2" %%i in ('python.exe --version 2^>^&1') do set "PYTHON_VERSION=%%i"
+cd /d "%~dp0"
+
+:: 解析版本号（如 3.13.0 -> 313）
+for /f "tokens=1,2 delims=." %%a in ("!PYTHON_VERSION!") do (
+    set "PY_VER_NO_DOT=%%a%%b"
+)
+
+if !VERBOSE_MODE! == 1 (
+    echo !LOG_PREFIX! [INFO] 检测到Python版本: !PYTHON_VERSION! >> "!LOG_FILE!"
+    echo !LOG_PREFIX! [INFO] 版本号: !PY_VER_NO_DOT! >> "!LOG_FILE!"
+)
+
+:: 检查对应版本的._pth文件
+if not exist "%PYTHON_DIR%\python!PY_VER_NO_DOT!._pth" (
+    echo    [INFO] 创建Python路径配置文件（版本 !PY_VER_NO_DOT!）...
+
+    :: 动态创建pth文件内容
+    (
+        echo python!PY_VER_NO_DOT!.zip
+        echo .
+        echo ..\app
+        echo import site
+    ) > "%PYTHON_DIR%\python!PY_VER_NO_DOT!._pth"
+
+    echo    [OK] Python路径配置文件创建成功
 ) else (
     echo    [OK] Python路径配置文件已存在
 )
@@ -157,7 +179,81 @@ if %errorlevel% == 0 (
 )
 cd /d "%~dp0"
 
-echo [4/5] 启动材料匹配工具...
+echo [4/6] 检查并安装依赖...
+
+:: 切换到 Python 目录
+pushd "%PYTHON_DIR%"
+if errorlevel 1 (
+    echo    [FAIL] 无法切换到 Python 目录
+    pause
+    exit /b 1
+)
+
+:: 检查 pip 是否安装
+echo    [INFO] 检查 pip...
+python.exe -c "import pip; print('OK')" 2>nul | findstr "OK" >nul
+if errorlevel 1 (
+    echo    [INFO] pip 未安装，正在安装...
+
+    :: 使用 PowerShell 下载 get-pip.py
+    echo    [INFO] 正在下载 get-pip.py...
+    powershell -Command "try { Invoke-WebRequest -Uri 'https://bootstrap.pypa.io/get-pip.py' -OutFile 'get-pip.py' -UseBasicParsing; exit 0 } catch { exit 1 }"
+
+    if not exist "get-pip.py" (
+        echo    [FAIL] 无法下载 get-pip.py，请检查网络连接
+        popd
+        pause
+        exit /b 1
+    )
+
+    echo    [INFO] 正在安装 pip...
+    python.exe get-pip.py --no-warn-script-location
+
+    if errorlevel 1 (
+        echo    [FAIL] pip 安装失败
+        popd
+        pause
+        exit /b 1
+    )
+
+    del "get-pip.py" 2>nul
+    echo    [OK] pip 安装成功
+) else (
+    echo    [OK] pip 已安装
+)
+
+:: 检查项目依赖是否已安装（检查 click 作为标记）
+echo    [INFO] 检查项目依赖
+python.exe -c "import click; print('OK')" 2>nul | findstr "OK" >nul
+if errorlevel 1 (
+    echo    [INFO] 正在安装项目依赖
+
+    if not exist "%ROOT_DIR%pyproject.toml" (
+        echo    [FAIL] 未找到 pyproject.toml
+        popd
+        pause
+        exit /b 1
+    )
+
+    echo    [INFO] 这可能需要几分钟，请耐心等待...
+    python.exe -m pip install -e "%ROOT_DIR:~0,-1%" --no-warn-script-location --quiet
+
+    if errorlevel 1 (
+        echo    [FAIL] 依赖安装失败，请手动执行: pip install -e .
+        popd
+        pause
+        exit /b 1
+    )
+
+    echo    [OK] 项目依赖安装成功
+) else (
+    echo    [OK] 项目依赖已安装
+)
+
+popd
+
+echo.
+echo [5/6] 启动材料匹配工具...
 echo.
 
 :: 切换到Python目录执行
@@ -201,7 +297,7 @@ if %APP_EXIT_CODE% == 0 (
     echo    [WARN] 材料匹配工具退出代码: %APP_EXIT_CODE%
 )
 
-echo [5/5] 清理和完成...
+echo [6/6] 清理和完成...
 if %VERBOSE_MODE% == 1 (
     echo %LOG_PREFIX% [INFO] 启动器执行完成 >> "%LOG_FILE%"
     echo   日志文件: %LOG_FILE%

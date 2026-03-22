@@ -12,3 +12,9 @@ wheels/
 # Excel temp files
 ~$.xlsx
 ~$*.xlsx
+
+# Git worktrees
+.worktrees/
+
+# Python embedded runtime
+python/
